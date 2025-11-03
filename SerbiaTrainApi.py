@@ -514,34 +514,34 @@ class TrainApi:
             table_headers = list(map(lambda h: h.get_text(strip=True), table_rows[0].find_all("th")))[:-1]
             table_headers.append("Details")
 
-        for row in table_rows[1:]:
-            #get data from row
-            data = list(map(lambda d: d.get_text(strip=True), row.select("td")))
-        
-            timetable_row = {}
+            for row in table_rows[1:]:
+                #get data from row
+                data = list(map(lambda d: d.get_text(strip=True), row.select("td")))
+            
+                timetable_row = {}
 
-            #go throught the headers
-            for i in range(0, len(table_headers)):
-                if i >= len(data): #handle if no data for header
-                    continue
+                #go throught the headers
+                for i in range(0, len(table_headers)):
+                    if i >= len(data): #handle if no data for header
+                        continue
 
-                if table_headers[i] == "Rang": #for rang, we get from image
-                    try:
-                        data[i] = row.select_one("td > img").attrs["title"]
-                    except:
-                        data[i] = "???"
+                    if table_headers[i] == "Rang": #for rang, we get from image
+                        try:
+                            data[i] = row.select_one("td > img").attrs["title"]
+                        except:
+                            data[i] = "???"
 
-                timetable_row[table_headers[i]] = data[i]
+                    timetable_row[table_headers[i]] = data[i]
 
-            arrivals.append(Arrival(
-                TrainNumber=timetable_row["Broj voza"],
-                ArrivalTime=timetable_row["Vreme dolaska"],
-                DepartureTime=timetable_row["Vreme polaska"],
-                IsLate=len(timetable_row["Kasni"]) > 0,
-                Direction=dir_,
-                TrainType=TrainType.parse(timetable_row["Rang"]),
-                Note=timetable_row["Napomena"]
-            ))
+                arrivals.append(Arrival(
+                    TrainNumber=timetable_row["Broj voza"],
+                    ArrivalTime=timetable_row["Vreme dolaska"],
+                    DepartureTime=timetable_row["Vreme polaska"],
+                    IsLate=len(timetable_row["Kasni"]) > 0,
+                    Direction=dir_,
+                    TrainType=TrainType.parse(timetable_row["Rang"]),
+                    Note=timetable_row["Napomena"]
+                ))
 
         return TimeTable(LastUpdated=datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S %Z%z"), Station=station, Arrivals=arrivals)
         
