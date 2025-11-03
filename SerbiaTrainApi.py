@@ -5,8 +5,16 @@ import urllib.parse
 from bs4 import BeautifulSoup
 
 from enum import Enum, Flag, auto
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict, is_dataclass
+from json import dumps as jsonDumps, JSONEncoder
 
+class DataclassJSONEncoder(JSONEncoder):
+    def default(self, obj):
+        if is_dataclass(obj):
+            return asdict(obj)  # handles nested dataclasses
+        if isinstance(obj, (Enum, Flag)):
+            return str(obj)      # or use obj.value if you prefer numbers
+        return super().default(obj)
 
 import datetime
 from dateutil.parser import parse as parse_date
@@ -37,12 +45,11 @@ class TrainType(Enum):
             case "BRZI VOZ":
                 return TrainType.INTER_CITY
             
-            case "REGIO EXPRESS":
+            case "REGIO EXPRES":
                 return TrainType.INTER_CITY
             
             case _:
                 TrainException("Unknown train type")
-
 
 class Station(Enum):
     KEMENDIN_ST = {'name': 'Kemendin st', 'id': '01016', 'safe name': 'KEMENDIN_ST'}
@@ -442,6 +449,9 @@ class Station(Enum):
     MOJKOVAC = {'name': 'MOJKOVAC', 'id': '31305', 'safe name': 'MOJKOVAC'}
     KOLASIN = {'name': 'KOLAŠIN', 'id': '31307', 'safe name': 'KOLASIN'}
 
+    def asJSON():
+        return jsonDumps({member.name: member.value for member in Station})
+
 class TrainDirection(Flag):
     INBOUND = auto()
     OUTBOUND = auto()
@@ -461,6 +471,9 @@ class TimeTable:
     LastUpdated: str
     Arrivals: list[Arrival]
     Station: Station
+
+    def toJSON(self) -> str:
+        return jsonDumps(self, cls=DataclassJSONEncoder)
 
 class TrainApi:
     def getStations(self, search=""):
